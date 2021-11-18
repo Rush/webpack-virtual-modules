@@ -4,6 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,7 +13,8 @@ jobs:
 
     strategy:
       matrix:
-        webpack-version: [3, 4, 5]
+        webpack-version: [5]
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v2

@@ -1,6 +1,8 @@
 import path from 'path';
 import { VirtualStats } from './virtual-stats';
 import type { Compiler } from 'webpack';
+import { FilteredWatchFileSystem } from './wfs';
+import { NodeWatchFileSystem } from './types';
 
 let inode = 45000000;
 
@@ -259,6 +261,7 @@ class VirtualModulesPlugin {
 
     const watchRunHook = (watcher, callback) => {
       this._watcher = watcher.compiler || watcher;
+
       const virtualFiles = (compiler as any).inputFileSystem._virtualFiles;
       const fts = compiler.fileTimestamps as any;
       if (virtualFiles && fts && typeof fts.set === 'function') {
@@ -266,6 +269,13 @@ class VirtualModulesPlugin {
           fts.set(file, +virtualFiles[file].stats.mtime);
         });
       }
+
+      if (!(compiler as any).__initialWatchRun) {
+        const wfsOrig = compiler.watchFileSystem;
+        compiler.watchFileSystem = new FilteredWatchFileSystem(wfsOrig as NodeWatchFileSystem);
+        (compiler as any).__initialWatchRun = true;
+      }
+
       callback();
     };
 
