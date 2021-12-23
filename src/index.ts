@@ -1,7 +1,7 @@
 import path from 'path';
 import { VirtualStats } from './virtual-stats';
 import type { Compiler } from 'webpack';
-import { FilteredWatchFileSystem } from './wfs';
+import { createFilteredWatchFileSystem } from './wfs';
 import { NodeWatchFileSystem } from './types';
 
 let inode = 45000000;
@@ -102,6 +102,7 @@ class VirtualModulesPlugin {
   private _staticModules: Record<string, string> | null;
   private _compiler: Compiler | null = null;
   private _watcher: any = null;
+  private _watchRunPatched: WeakSet<Compiler> = new WeakSet();
 
   public constructor(modules?: Record<string, string>) {
     this._staticModules = modules || null;
@@ -270,10 +271,9 @@ class VirtualModulesPlugin {
         });
       }
 
-      if (!(compiler as any).__initialWatchRun) {
-        const wfsOrig = compiler.watchFileSystem;
-        compiler.watchFileSystem = new FilteredWatchFileSystem(wfsOrig as NodeWatchFileSystem);
-        (compiler as any).__initialWatchRun = true;
+      if (!this._watchRunPatched.has(compiler)) {
+        compiler.watchFileSystem = createFilteredWatchFileSystem(compiler.watchFileSystem as NodeWatchFileSystem);
+        this._watchRunPatched.add(compiler);
       }
 
       callback();
