@@ -1,18 +1,16 @@
 import type { Watchpack } from 'watchpack';
 import type { Watcher, NodeWatchFileSystem } from './types';
 
-
-export function createFilteredWatchFileSystem(wfs: NodeWatchFileSystem): (typeof wfs) {
-  function _wfsWatch(
-    this: NodeWatchFileSystem,
-    ...args: any[]
-  ): Watcher {
+export function createFilteredWatchFileSystem(wfs: NodeWatchFileSystem): typeof wfs {
+  function _wfsWatch(this: NodeWatchFileSystem, ...args: any[]): Watcher {
     const ret = this.watch.apply(this, args as any);
 
     // patch the watcher's only listener of the "aggregated" event
     const listenersOfAggregated = this.watcher.rawListeners('aggregated');
     if (listenersOfAggregated.length !== 1) {
-      throw new Error('[webpack-virtual-modules] Failed to patch NodeWatchFileSystem: Number of listeners should be exactly 1.');
+      throw new Error(
+        '[webpack-virtual-modules] Failed to patch NodeWatchFileSystem: Number of listeners should be exactly 1.'
+      );
     }
 
     const originalListener = listenersOfAggregated[0];
